@@ -101,28 +101,24 @@ parse_int (const char *s) {
  * Return a string allocated on the heap with the content from sep to end and
  * terminate buf at sep.
  */
-static char *
-parse_slice (char *buf, char sep) {
-  char *pr, *part;
+static void
+parse_slice (const char *buf, char sep, char* part) {
+  char *pr;
   int plen;
 
   /* Find separator in buf */
   pr = strchr(buf, sep);
-  if (pr == NULL) return NULL;
+  if (pr == NULL) return;
   /* Length from separator to end of buf */
   plen = strlen(pr);
 
   /* Copy from buf into new string */
-  part = (char*)calloc(plen + 1, sizeof(*part));
-  if (part == NULL) return NULL;
   memcpy(part, pr + 1, plen);
   /* Null terminate new string */
   part[plen] = '\0';
 
   /* Terminate buf where separator was */
   *pr = '\0';
-
-  return part;
 }
 
 /**
@@ -137,21 +133,16 @@ parse_slice (char *buf, char sep) {
 int
 semver_parse (const char *str, semver_t *ver) {
   int valid, res;
-  size_t len;
-  char *buf;
+  char buf[SEMVER_MAX_VERSION_LENGTH];
   valid = semver_is_valid(str);
   if (!valid) return -1;
 
-  len = strlen(str);
-  buf = (char*)calloc(len + 1, sizeof(*buf));
-  if (buf == NULL) return -1;
   strcpy(buf, str);
 
-  ver->metadata = parse_slice(buf, MT_DELIMITER[0]);
-  ver->prerelease = parse_slice(buf, PR_DELIMITER[0]);
+  parse_slice(buf, MT_DELIMITER[0], ver->metadata);
+  parse_slice(buf, PR_DELIMITER[0], ver->prerelease);
 
-  res = semver_parse_version(buf, ver);
-  free(buf);
+  res = semver_parse_version(str, ver);
 #if DEBUG > 0
   printf("[debug] semver.c %s = %d.%d.%d, %s %s\n", str, ver->major, ver->minor, ver->patch, ver->prerelease, ver->metadata);
 #endif
@@ -474,24 +465,6 @@ semver_satisfies (semver_t x, semver_t y, const char *op) {
   }
 
   return 0;
-}
-
-/**
- * Free heep allocated memory of a given semver.
- * This is just a convenient function that you
- * should call when you're done.
- */
-
-void
-semver_free (semver_t *x) {
-  if (x->metadata) {
-    free(x->metadata);
-    x->metadata = NULL;
-  }
-  if (x->prerelease) {
-    free(x->prerelease);
-    x->prerelease = NULL;
-  }
 }
 
 /**

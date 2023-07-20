@@ -16,6 +16,10 @@ extern "C" {
 #define SEMVER_VERSION "0.2.0"
 #endif
 
+#define SEMVER_MAX_VERSION_LENGTH 32
+#define SEMVER_MAX_PRERELEASE_LENGTH 10
+#define SEMVER_MAX_METADATA_LENGTH 10
+
 /**
  * semver_t struct
  */
@@ -24,8 +28,8 @@ typedef struct semver_version_s {
   int major;
   int minor;
   int patch;
-  char * metadata;
-  char * prerelease;
+  char metadata[SEMVER_MAX_METADATA_LENGTH];
+  char prerelease[SEMVER_MAX_PRERELEASE_LENGTH];
 } semver_t;
 
 /**
@@ -88,9 +92,6 @@ semver_bump_minor (semver_t *x);
 
 void
 semver_bump_patch (semver_t *x);
-
-void
-semver_free (semver_t *x);
 
 int
 semver_is_valid (const char *s);
